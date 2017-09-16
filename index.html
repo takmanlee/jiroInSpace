@@ -1,0 +1,156 @@
+<!doctype html> 
+<!--suppress JSAnnotator -->
+<html lang="en">
+<head> 
+	<meta charset="UTF-8" />
+    <title>Jiro The Pig</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+function preload() {
+
+
+    game.load.image('bg', 'assets/bg.png');
+    game.load.image('ground', 'assets/platform.png');
+    game.load.image('star', 'assets/star.png');
+    game.load.spritesheet('player', 'assets/player.png', 32, 48);
+    game.load.spritesheet('button','assets/start.png',280,208);
+}
+
+var player;
+var platforms;
+var cursors;
+var lives = 3;
+var stars;
+var score = 0;
+var scoreText;
+var playing = false;
+var startButton;
+var notInitialized = true;
+
+
+function create() {
+
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+    game.add.sprite(0, 0, 'bg');
+
+    platforms = game.add.group();
+    platforms.enableBody = true;
+
+    var ground = platforms.create(0, game.world.height - 24, 'ground');
+    ground.scale.setTo(2, 2);
+
+    ground.body.immovable = true;
+
+    player = game.add.sprite(game.world.width*0.5, game.world.height - 150, 'player');
+
+    game.physics.arcade.enable(player);
+
+    player.body.bounce.y = 0.2;
+    player.body.gravity.y = 500;
+    player.body.collideWorldBounds = true;
+
+    player.animations.add('left', [0, 1, 2, 3], 10, true);
+    player.animations.add('right', [5, 6, 7, 8], 10, true);
+
+    stars = game.add.group();
+    stars.enableBody = true;
+
+    scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#ffffff' });
+    livesText = game.add.text(game.world.width-126, 16, 'Lives:'+lives, { fontSize: '32px', fill: '#ffffff' });
+
+    cursors = game.input.keyboard.createCursorKeys();
+
+
+    game.physics.setBoundsToWorld();
+
+    startButton = game.add.button(game.world.width*0.5,game.world.height*0.5, 'button', startGame, this, 1, 0, 2);
+    startButton.anchor.set(0.5);
+}
+
+function update() {
+
+    //  Collide the player and the stars with the platforms
+    game.physics.arcade.collide(player, platforms);
+    //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
+    game.physics.arcade.overlap(player, stars, collectStar, null, this);
+
+    //  Reset the players velocity (movement)
+    player.body.velocity.x = 0;
+
+    if(playing) {
+        if(notInitialized){
+            for (var i = 0; i < 12; i++) {
+                var star = stars.create(i * 70, 0, 'star');
+                star.checkWorldBounds = true;
+                star.events.onOutOfBounds.add(starOut, this);
+                star.body.gravity.y = 50 + Math.random() * 200;
+            }
+            notInitialized = false;
+        }
+
+        if (cursors.left.isDown) {
+            player.body.velocity.x = -350;
+
+            player.animations.play('left');
+        }
+        else if (cursors.right.isDown) {
+            player.body.velocity.x = 350;
+
+            player.animations.play('right');
+        }
+        else {
+            player.animations.stop();
+
+            player.frame = 4;
+        }
+
+        if (cursors.up.isDown && player.body.touching.down) {
+            player.body.velocity.y = -350;
+        }
+    }
+}
+
+function collectStar (player, star) {
+
+    star.kill();
+    star.reset(Math.random()*12*70.0, 0 );
+
+    score += 10;
+    scoreText.text = 'Score: ' + score;
+
+}
+
+function starOut(star) {
+    star.reset(Math.random()*12*70.0, 0 );
+
+    score -= 2;
+    if(lives) {
+        livesText.setText('Lives: ' + lives);
+        player.reset(player.x, game.world.height - 70);
+    }
+    else {
+        alert('You lost, game over!');
+        location.reload();
+    }
+}
+
+function startGame() {
+    startButton.destroy();
+    playing = true;
+}
+
+</script>
+
+</body>
+</html>
