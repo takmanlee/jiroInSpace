@@ -3,7 +3,7 @@
 <html lang="en">
 <head> 
 	<meta charset="UTF-8" />
-    <title>Jiro The Pig</title>
+    <title>Jiro In Space</title>
 	<script type="text/javascript" src="js/phaser.min.js"></script>
     <style type="text/css">
         body {
@@ -23,6 +23,7 @@ function preload() {
     game.load.image('bg', 'assets/bg.png');
     game.load.image('ground', 'assets/platform.png');
     game.load.image('star', 'assets/star.png');
+    game.load.image('asteroid', 'assets/asteroid.png');
     game.load.spritesheet('player', 'assets/player.png', 32, 48);
     game.load.spritesheet('button','assets/start.png',280,208);
 }
@@ -66,11 +67,14 @@ function create() {
     stars = game.add.group();
     stars.enableBody = true;
 
+    asteroids = game.add.group();
+    asteroids.enableBody = true;
+
     scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#ffffff' });
     livesText = game.add.text(game.world.width-126, 16, 'Lives:'+lives, { fontSize: '32px', fill: '#ffffff' });
 
     cursors = game.input.keyboard.createCursorKeys();
-
+    this.spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 
     game.physics.setBoundsToWorld();
 
@@ -84,6 +88,7 @@ function update() {
     game.physics.arcade.collide(player, platforms);
     //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
     game.physics.arcade.overlap(player, stars, collectStar, null, this);
+    game.physics.arcade.overlap(player, asteroids, getHit, null, this);
 
     //  Reset the players velocity (movement)
     player.body.velocity.x = 0;
@@ -93,8 +98,15 @@ function update() {
             for (var i = 0; i < 12; i++) {
                 var star = stars.create(i * 70, 0, 'star');
                 star.checkWorldBounds = true;
-                star.events.onOutOfBounds.add(starOut, this);
+                star.events.onOutOfBounds.add(itemOut, this);
                 star.body.gravity.y = 50 + Math.random() * 200;
+            }
+            for (var i = 0; i < 9; i++) {
+                var asteroid = asteroids.create(i * 140, 0, 'asteroid');
+                asteroid.checkWorldBounds = true;
+                asteroid.events.onOutOfBounds.add(itemOut, this);
+                asteroid.body.gravity.y = 80 + Math.random() * 200;
+                console.log("teams and techs");
             }
             notInitialized = false;
         }
@@ -115,9 +127,6 @@ function update() {
             player.frame = 4;
         }
 
-        if (cursors.up.isDown && player.body.touching.down) {
-            player.body.velocity.y = -350;
-        }
     }
 }
 
@@ -131,17 +140,40 @@ function collectStar (player, star) {
 
 }
 
-function starOut(star) {
-    star.reset(Math.random()*12*70.0, 0 );
+function getHit (player, asteroid) {
+
+    asteroid.kill();
+    asteroid.reset(Math.random()*12*70.0, 0 );
+
+    lives -= 1;
+    livesText.setText('Lives: ' + lives);
+    if(lives == 0) {
+        playing = false;
+        player.reset(player.x, game.world.height - 70);
+        stateText = game.add.text(game.world.width/2, game.world.height/2, 'Game Over /n Press SpaceBar to Continue', { fontSize: '32px', fill: '#ffffff' });
+        if (this.spaceKey.isDown) {
+            location.reload();
+        }
+    }
+
+}
+
+function itemOut(item) {
 
     score -= 2;
-    if(lives) {
+    scoreText.text = 'Score: ' + score;
+    if(lives>0) {
+        item.reset(Math.random()*12*70.0, 0 );
         livesText.setText('Lives: ' + lives);
         player.reset(player.x, game.world.height - 70);
     }
     else {
-        alert('You lost, game over!');
-        location.reload();
+        playing = false;
+        player.reset(player.x, game.world.height - 70);
+        stateText = game.add.text(game.world.width/2, game.world.height/2, 'Game Over Press SpaceBar to Continue', { fontSize: '32px', fill: '#ffffff' });
+        if (this.spaceKey.isDown) {
+            location.reload();
+        }
     }
 }
 
