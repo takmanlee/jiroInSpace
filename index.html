@@ -106,7 +106,6 @@ function update() {
                 asteroid.checkWorldBounds = true;
                 asteroid.events.onOutOfBounds.add(itemOut, this);
                 asteroid.body.gravity.y = 80 + Math.random() * 200;
-                console.log("teams and techs");
             }
             notInitialized = false;
         }
@@ -148,12 +147,7 @@ function getHit (player, asteroid) {
     lives -= 1;
     livesText.setText('Lives: ' + lives);
     if(lives == 0) {
-        playing = false;
-        player.reset(player.x, game.world.height - 70);
-        stateText = game.add.text(game.world.width/2, game.world.height/2, 'Game Over /n Press SpaceBar to Continue', { fontSize: '32px', fill: '#ffffff' });
-        if (this.spaceKey.isDown) {
-            location.reload();
-        }
+        gameOver();
     }
 
 }
@@ -168,18 +162,26 @@ function itemOut(item) {
         player.reset(player.x, game.world.height - 70);
     }
     else {
-        playing = false;
-        player.reset(player.x, game.world.height - 70);
-        stateText = game.add.text(game.world.width/2, game.world.height/2, 'Game Over Press SpaceBar to Continue', { fontSize: '32px', fill: '#ffffff' });
-        if (this.spaceKey.isDown) {
-            location.reload();
-        }
+
+        gameOver();
     }
 }
 
 function startGame() {
     startButton.destroy();
     playing = true;
+}
+
+function gameOver() {
+    livesText.setText('Lives: ' + lives);
+    playing = false;
+    player.reset(player.x, game.world.height - 70);
+    this.asteroids.destroy();
+    this.stars.destroy();
+    stateText = game.add.text(game.world.width / 5, game.world.height / 2,    'Game Over Press SpaceBar to Continue', {
+        fontSize: '32px',
+        fill: '#ffffff'
+    });
 }
 
 </script>
